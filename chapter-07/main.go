@@ -3,10 +3,8 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"math/rand"
 	"net/http"
 	"os"
-	"strconv"
 	"strings"
 	"time"
 
@@ -46,14 +44,10 @@ type LoginRequest struct {
 	Password string `json:"password"`
 }
 
-var (
-	allData  []ShoppingList = []ShoppingList{}
-	sessions                = map[string]*Session{}
-	allUsers                = map[string]*User{
-		"admin": {"admin", "admin", "password"},
-		"user":  {"user", "user", "password"},
-	}
-)
+var allUsers = map[string]*User{
+	"admin": {"admin", "admin", "password"},
+	"user":  {"user", "user", "password"},
+}
 
 var repository *Repository
 
@@ -121,7 +115,12 @@ func handleCreateList(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	allData = append(allData, list)
+
+	err = repository.CreateShoppingList(&list)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 
 	w.WriteHeader(http.StatusCreated)
 
@@ -133,7 +132,13 @@ func handleCreateList(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleListLists(w http.ResponseWriter, r *http.Request) {
-	data, err := json.Marshal(allData)
+	lists, err := repository.GetAllShoppingLists()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	data, err := json.Marshal(lists)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -147,116 +152,110 @@ func handleListLists(w http.ResponseWriter, r *http.Request) {
 
 func handleDeleteList(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("id")
-	for i, list := range allData {
-		if strconv.Itoa(list.ID) == id {
-			allData = append(allData[:i], allData[i+1:]...)
-
-			w.WriteHeader(http.StatusNoContent)
-			return
-		}
+	err := repository.DeleteShoppingList(id)
+	if err != nil {
+		http.Error(w, "List not found", http.StatusNotFound)
+		return
 	}
-	http.Error(w, "List not found", http.StatusNotFound)
+	w.WriteHeader(http.StatusNoContent)
 }
 
 func handleUpdateList(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("id")
-	for i, list := range allData {
-		if strconv.Itoa(list.ID) == id {
-			var updatedList ShoppingList
-			err := json.NewDecoder(r.Body).Decode(&updatedList)
-			if err != nil {
-				http.Error(w, err.Error(), http.StatusBadRequest)
-				return
-			}
-			allData[i] = updatedList
-
-			if err := json.NewEncoder(w).Encode(updatedList); err != nil {
-
-				http.Error(w, err.Error(), http.StatusInternalServerError)
-
-				return
-
-			}
-			return
-		}
+	var updatedList ShoppingList
+	err := json.NewDecoder(r.Body).Decode(&updatedList)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
 	}
-	http.Error(w, "List not found", http.StatusNotFound)
+
+	err = repository.UpdateShoppingList(id, &updatedList)
+	if err != nil {
+		http.Error(w, "List not found", http.StatusNotFound)
+		return
+	}
+
+	if err := json.NewEncoder(w).Encode(updatedList); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 }
 
 func handlePatchList(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("id")
-	for i, list := range allData {
-		if strconv.Itoa(list.ID) == id {
-			var patch ShoppingListPatch
-			err := json.NewDecoder(r.Body).Decode(&patch)
-			if err != nil {
-				http.Error(w, err.Error(), http.StatusInternalServerError)
-				return
-			}
-			if patch.Name != nil {
-				list.Name = *patch.Name
-			}
-			if patch.Items != nil {
-				list.Items = patch.Items
-			}
-			allData[i] = list
-
-			err = json.NewEncoder(w).Encode(list)
-			if err != nil {
-				http.Error(w, err.Error(), http.StatusInternalServerError)
-				return
-			}
-			return
-		}
+	var patch ShoppingListPatch
+	err := json.NewDecoder(r.Body).Decode(&patch)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
-	http.Error(w, "List not found", http.StatusNotFound)
+
+	err = repository.PatchShoppingList(id, &patch)
+	if err != nil {
+		http.Error(w, "List not found", http.StatusNotFound)
+		return
+	}
+
+	list, err := repository.GetShoppingList(id)
+	if err != nil {
+		http.Error(w, "List not found", http.StatusNotFound)
+		return
+	}
+
+	err = json.NewEncoder(w).Encode(list)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 }
 
 func handleGetList(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("id")
-	for _, list := range allData {
-		if strconv.Itoa(list.ID) == id {
-			data, err := json.Marshal(list)
-			if err != nil {
-				http.Error(w, err.Error(), http.StatusInternalServerError)
-				return
-			}
-			_, err = w.Write(data)
-			if err != nil {
-				http.Error(w, err.Error(), http.StatusInternalServerError)
-				return
-			}
-			return
-		}
+	list, err := repository.GetShoppingList(id)
+	if err != nil {
+		http.Error(w, "List not found", http.StatusNotFound)
+		return
 	}
-	http.Error(w, "List not found", http.StatusNotFound)
+
+	data, err := json.Marshal(list)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	_, err = w.Write(data)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 }
 
 func handleListPush(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("id")
-	for i, list := range allData {
-		if strconv.Itoa(list.ID) == id {
-			var item ListPushAction
-			err := json.NewDecoder(r.Body).Decode(&item)
-			if err != nil {
-				http.Error(w, err.Error(), http.StatusInternalServerError)
-				return
-			}
-			list.Items = append(list.Items, item.Item)
-			allData[i] = list
-
-			err = json.NewEncoder(w).Encode(list)
-			if err != nil {
-
-				http.Error(w, err.Error(), http.StatusInternalServerError)
-
-				return
-
-			}
-			return
-		}
+	var item ListPushAction
+	err := json.NewDecoder(r.Body).Decode(&item)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
-	http.Error(w, "List not found", http.StatusNotFound)
+
+	list, err := repository.GetShoppingList(id)
+	if err != nil {
+		http.Error(w, "List not found", http.StatusNotFound)
+		return
+	}
+
+	list.Items = append(list.Items, item.Item)
+	err = repository.UpdateShoppingList(id, list)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	err = json.NewEncoder(w).Encode(list)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 }
 
 func handleLogin(w http.ResponseWriter, r *http.Request) {
@@ -264,13 +263,14 @@ func handleLogin(w http.ResponseWriter, r *http.Request) {
 	json.NewDecoder(r.Body).Decode(&data)
 	user := allUsers[data.Username]
 	if user != nil && user.Password == data.Password {
-		token := strconv.Itoa(rand.Intn(100000000000))
-		sessions[token] = &Session{
-			Expires:  time.Now().Add(7 * 24 * time.Hour),
-			Username: user.Username,
+		session, err := repository.AddSession(user.Username)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
 		}
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(map[string]string{"token": token})
+		json.NewEncoder(w).Encode(map[string]string{"token": session.Token})
+		return
 	}
 	w.WriteHeader(http.StatusUnauthorized)
 }
@@ -296,7 +296,12 @@ func adminRequired(next http.HandlerFunc) http.HandlerFunc {
 	return authRequired(func(w http.ResponseWriter, r *http.Request) {
 		token := r.Header.Get("Authorization")
 		token = token[7:]
-		user := allUsers[sessions[token].Username]
+		session, err := repository.GetSession(token)
+		if err != nil {
+			http.Error(w, "unauthorized", http.StatusUnauthorized)
+			return
+		}
+		user := allUsers[session.Username]
 		if user.Role != "admin" {
 			http.Error(w, "forbidden", http.StatusForbidden)
 			return

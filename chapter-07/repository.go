@@ -57,6 +57,64 @@ func (r *Repository) GetSession(token string) (*Session, error) {
 	return &session, nil
 }
 
+func (r *Repository) CreateShoppingList(list *ShoppingList) error {
+	query := sq.Insert("shopping_lists").Columns("id", "name", "items").Values(strconv.Itoa(list.ID), list.Name, strings.Join(list.Items, ","))
+	_, err := query.RunWith(r.db).Exec()
+	return err
+}
+
+func (r *Repository) GetAllShoppingLists() ([]ShoppingList, error) {
+	query := sq.Select("id", "name", "items").From("shopping_lists")
+	rows, err := query.RunWith(r.db).Query()
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var lists []ShoppingList
+	for rows.Next() {
+		var list ShoppingList
+		var idStr, itemsStr string
+		if err := rows.Scan(&idStr, &list.Name, &itemsStr); err != nil {
+			return nil, err
+		}
+		list.ID, _ = strconv.Atoi(idStr)
+		if itemsStr != "" {
+			list.Items = strings.Split(itemsStr, ",")
+		}
+		lists = append(lists, list)
+	}
+	return lists, nil
+}
+
+func (r *Repository) GetShoppingList(id string) (*ShoppingList, error) {
+	query := sq.Select("id", "name", "items").From("shopping_lists").Where(sq.Eq{"id": id})
+	row := query.RunWith(r.db).QueryRow()
+
+	var list ShoppingList
+	var idStr, itemsStr string
+	if err := row.Scan(&idStr, &list.Name, &itemsStr); err != nil {
+		return nil, err
+	}
+	list.ID, _ = strconv.Atoi(idStr)
+	if itemsStr != "" {
+		list.Items = strings.Split(itemsStr, ",")
+	}
+	return &list, nil
+}
+
+func (r *Repository) UpdateShoppingList(id string, list *ShoppingList) error {
+	query := sq.Update("shopping_lists").Where(sq.Eq{"id": id}).Set("name", list.Name).Set("items", strings.Join(list.Items, ","))
+	_, err := query.RunWith(r.db).Exec()
+	return err
+}
+
+func (r *Repository) DeleteShoppingList(id string) error {
+	query := sq.Delete("shopping_lists").Where(sq.Eq{"id": id})
+	_, err := query.RunWith(r.db).Exec()
+	return err
+}
+
 func (r *Repository) PatchShoppingList(id string, patch *ShoppingListPatch) error {
 	query := sq.Update("shopping_lists").Where(sq.Eq{"id": id})
 	if patch.Name != nil {
