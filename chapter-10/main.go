@@ -8,6 +8,8 @@ import (
 	"os"
 	"strings"
 	"time"
+
+	lru "github.com/hashicorp/golang-lru/v2"
 )
 
 type ShoppingList struct {
@@ -42,15 +44,23 @@ type LoginRequest struct {
 	Password string `json:"password"`
 }
 
-var allUsers = map[string]*User{
-	"admin": {"admin", "admin", "password"},
-	"user":  {"user", "user", "password"},
-}
+var (
+	allUsers = map[string]*User{
+		"admin": {"admin", "admin", "password"},
+		"user":  {"user", "user", "password"},
+	}
+	listsCache *lru.Cache[string, ShoppingList]
+)
 
-var repository *Repository
+var repository RepositoryInterface
 
 func main() {
 	var err error
+	listsCache, err = lru.New[string, ShoppingList](128)
+	if err != nil {
+		fmt.Println("Unable to initialize the lists cache:", err.Error())
+		os.Exit(1)
+	}
 	repository, err = NewRepository("./database.db")
 	if err != nil {
 		fmt.Println("Unable to open the database:", err.Error())
@@ -61,7 +71,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	http.HandleFunc("GET /lists", authRequired(handleListLists))
+	http.HandleFunc("GET /lists", addCacheHeaders(authRequired(handleListLists)))
 	http.HandleFunc("POST /lists", adminRequired(handleCreateList))
 	http.HandleFunc("GET /lists/{id}", authRequired(handleGetList))
 	http.HandleFunc("PUT /lists/{id}", adminRequired(handleUpdateList))
@@ -83,7 +93,6 @@ func handleCreateList(w http.ResponseWriter, r *http.Request) {
 	}
 
 	list.ID = rand.Int()
-
 	err = repository.CreateShoppingList(&list)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -125,6 +134,7 @@ func handleDeleteList(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "List not found", http.StatusNotFound)
 		return
 	}
+	listsCache.Remove(id)
 	w.WriteHeader(http.StatusNoContent)
 }
 
@@ -142,6 +152,7 @@ func handleUpdateList(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "List not found", http.StatusNotFound)
 		return
 	}
+	listsCache.Remove(id)
 
 	if err := json.NewEncoder(w).Encode(updatedList); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -163,6 +174,7 @@ func handlePatchList(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "List not found", http.StatusNotFound)
 		return
 	}
+	listsCache.Remove(id)
 
 	list, err := repository.GetShoppingList(id)
 	if err != nil {
@@ -179,10 +191,14 @@ func handlePatchList(w http.ResponseWriter, r *http.Request) {
 
 func handleGetList(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("id")
-	list, err := repository.GetShoppingList(id)
-	if err != nil {
-		http.Error(w, "List not found", http.StatusNotFound)
-		return
+	list, ok := listsCache.Get(id)
+	if !ok {
+		dbList, err := repository.GetShoppingList(id)
+		if err != nil {
+			http.Error(w, "List not found", http.StatusNotFound)
+			return
+		}
+		listsCache.Add(id, *dbList)
 	}
 
 	data, err := json.Marshal(list)
@@ -218,6 +234,7 @@ func handleListPush(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+	listsCache.Remove(id)
 
 	err = json.NewEncoder(w).Encode(list)
 	if err != nil {
@@ -276,4 +293,12 @@ func adminRequired(next http.HandlerFunc) http.HandlerFunc {
 		}
 		next(w, r)
 	})
+}
+
+func addCacheHeaders(next http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Cache-Control", "public, max-age=300")
+		w.Header().Set("Expires", time.Now().Add(5*time.Minute).Format(http.TimeFormat))
+		next(w, r)
+	}
 }

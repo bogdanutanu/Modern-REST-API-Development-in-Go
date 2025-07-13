@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"math/rand"
 	"net/http"
 	"os"
 	"strings"
@@ -90,6 +91,8 @@ func handleCreateList(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
+
+	list.ID = rand.Int()
 
 	err = repository.CreateShoppingList(&list)
 	if err != nil {
