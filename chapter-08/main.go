@@ -1,6 +1,7 @@
 package main
 
 import (
+	"crypto/sha256"
 	"encoding/json"
 	"fmt"
 	"math/rand"
@@ -207,6 +208,13 @@ func handleGetList(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+	w.Header().Set("Cache-Control", "no-cache")
+	etag := fmt.Sprintf(`"%x"`, sha256.Sum256(data))
+	if match := r.Header.Get("If-None-Match"); match == etag {
+		w.WriteHeader(http.StatusNotModified)
+		return
+	}
+	w.Header().Set("ETag", etag)
 	_, err = w.Write(data)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
