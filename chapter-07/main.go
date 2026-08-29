@@ -2,7 +2,8 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
+	"errors"
+	"log/slog"
 	"math/rand"
 	"net/http"
 	"os"
@@ -54,17 +55,20 @@ var repository *Repository
 
 func main() {
 	var err error
+
 	repository, err = NewRepository("./database.db")
 	if err != nil {
-		fmt.Println("Unable to open the database:", err.Error())
+		slog.Error("Unable to open the database", "error", err)
 		os.Exit(1)
 	}
+
 	if err := repository.Init(); err != nil {
-		fmt.Println("Unable to initialize the database:", err.Error())
+		slog.Error("Unable to initialize the database", "error", err)
 		os.Exit(1)
 	}
 
 	mux := http.NewServeMux()
+
 	mux.HandleFunc("GET /lists", authRequired(handleListLists))
 	mux.HandleFunc("POST /lists", adminRequired(handleCreateList))
 	mux.HandleFunc("GET /lists/{id}", authRequired(handleGetList))
@@ -75,7 +79,9 @@ func main() {
 	mux.HandleFunc("POST /login", handleLogin)
 
 	corsMiddleware := cors.New(cors.Options{
-		AllowedOrigins: []string{"http://localhost:3000"},
+		AllowedOrigins: []string{
+			"http://localhost:3000",
+		},
 		AllowedMethods: []string{
 			http.MethodGet,
 			http.MethodPost,
@@ -91,22 +97,70 @@ func main() {
 		MaxAge: 300,
 	})
 
-	certManager := autocert.Manager{
-		Prompt:     autocert.AcceptTOS,
-		HostPolicy: autocert.HostWhitelist("ourdomain.com"),
-		Cache:      autocert.DirCache("certs"),
-	}
-
 	corsHandler := corsMiddleware.Handler(mux)
 
-	server := &http.Server{
-		Addr:      ":https",
-		Handler:   corsHandler,
-		TLSConfig: certManager.TLSConfig(),
+	appEnv := strings.ToLower(strings.TrimSpace(os.Getenv("APP_ENV")))
+
+	if appEnv == "production" {
+		certManager := autocert.Manager{
+			Prompt:     autocert.AcceptTOS,
+			HostPolicy: autocert.HostWhitelist("ourdomain.com"),
+			Cache:      autocert.DirCache("certs"),
+		}
+
+		server := &http.Server{
+			Addr:      ":443",
+			Handler:   corsHandler,
+			TLSConfig: certManager.TLSConfig(),
+		}
+
+		go func() {
+			httpServer := &http.Server{
+				Addr:    ":80",
+				Handler: certManager.HTTPHandler(nil),
+			}
+
+			slog.Info("Starting HTTP ACME challenge server", "addr", httpServer.Addr)
+
+			if err := httpServer.ListenAndServe(); err != nil &&
+				!errors.Is(err, http.ErrServerClosed) {
+				slog.Error("HTTP ACME server stopped", "error", err)
+			}
+		}()
+
+		slog.Info(
+			"Starting production HTTPS server",
+			"addr", server.Addr,
+			"environment", appEnv,
+		)
+
+		if err := server.ListenAndServeTLS("", ""); err != nil &&
+			!errors.Is(err, http.ErrServerClosed) {
+			slog.Error("Production HTTPS server stopped", "error", err)
+			os.Exit(1)
+		}
+
+		return
 	}
 
-	go http.ListenAndServe(":http", certManager.HTTPHandler(nil))
-	server.ListenAndServeTLS("", "")
+	server := &http.Server{
+		Addr:    "127.0.0.1:8888",
+		Handler: corsHandler,
+	}
+
+	slog.Info(
+		"Starting local HTTPS server with mkcert certificate",
+		"addr", server.Addr,
+		"environment", appEnv,
+	)
+
+	if err := server.ListenAndServeTLS(
+		"../certs/local-cert.pem",
+		"../certs/local-key.pem",
+	); err != nil && !errors.Is(err, http.ErrServerClosed) {
+		slog.Error("Local HTTPS server stopped", "error", err)
+		os.Exit(1)
+	}
 }
 
 func handleCreateList(w http.ResponseWriter, r *http.Request) {
