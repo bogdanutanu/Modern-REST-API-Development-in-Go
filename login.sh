@@ -6,14 +6,15 @@
 
 set -eo pipefail
 
-API_BASE="${API_BASE:-http://localhost:8888}"
+API_PROTOCOL="${API_PROTOCOL:-https}"
+API_URL="${API_URL:-${API_PROTOCOL}://localhost:8888}"
 USERNAME="${USERNAME:-admin}"
 PASSWORD="${PASSWORD:-password}"
 
 TOKEN=$(curl -s -X POST \
   -d "{\"username\": \"${USERNAME}\", \"password\": \"${PASSWORD}\"}" \
   -H "Content-Type: application/json" \
-  "${API_BASE}/login" | jq -r '.token')
+  "${API_URL}/login" | jq -r '.token')
 
 if [ -z "$TOKEN" ] || [ "$TOKEN" = "null" ]; then
   echo "echo 'Failed to obtain token' >&2" 
