@@ -45,21 +45,23 @@ curl -X POST \
   https://localhost:8888/login
 ```
 
+Run `eval "$(./login.sh)"` to store the token into the TOKEN env var.
+
 ## List all lists
 ```
-curl https://localhost:8888/lists -H "Authorization: Bearer "
+curl https://localhost:8888/lists -H "Authorization: Bearer $TOKEN"
 ```
 
 ## Create List
 ```
 curl -X POST https://localhost:8888/lists \
-  -H "Authorization: Bearer " \
+  -H "Authorization: Bearer $TOKEN" \
   --data '{"id": 1, "name": "my first shopping list", "items": ["eggs", "milk"]}'
 ```
 
 ## Delete
 ```
 curl -X DELETE \
-  -H "Authorization: Bearer " \
+  -H "Authorization: Bearer $TOKEN" \
   https://localhost:8888/v1/lists/1
 ```
