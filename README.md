@@ -26,6 +26,14 @@ mkcert -install
 
 # Example requests
 
+Set the protocol once before running the requests. It defaults to `https`; use
+`API_PROTOCOL=http` to connect to a server without TLS.
+
+```sh
+API_PROTOCOL="${API_PROTOCOL:-https}"
+API_URL="${API_PROTOCOL}://localhost:8888"
+```
+
 ## Login
 
 Regular user:
@@ -33,7 +41,7 @@ Regular user:
 curl -X POST \
   -d '{"username": "user", "password": "password"}' \
   -H "Content-Type: application/json" \
-  https://localhost:8888/login
+  "$API_URL/login"
 ```
 
 Admin:
@@ -42,24 +50,26 @@ Admin:
 curl -X POST \
   -d '{"username": "admin", "password": "password"}' \
   -H "Content-Type: application/json" \
-  https://localhost:8888/login
+  "$API_URL/login"
 ```
+
+Run `eval "$(./login.sh)"` to store the token into the TOKEN env var.
 
 ## List all lists
 ```
-curl https://localhost:8888/lists -H "Authorization: Bearer "
+curl "$API_URL/lists" -H "Authorization: Bearer $TOKEN"
 ```
 
 ## Create List
 ```
-curl -X POST https://localhost:8888/lists \
-  -H "Authorization: Bearer " \
+curl -X POST "$API_URL/lists" \
+  -H "Authorization: Bearer $TOKEN" \
   --data '{"id": 1, "name": "my first shopping list", "items": ["eggs", "milk"]}'
 ```
 
 ## Delete
 ```
 curl -X DELETE \
-  -H "Authorization: Bearer " \
-  https://localhost:8888/v1/lists/1
+  -H "Authorization: Bearer $TOKEN" \
+  "$API_URL/v1/lists/1"
 ```
