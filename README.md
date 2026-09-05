@@ -73,3 +73,8 @@ curl -X DELETE \
   -H "Authorization: Bearer $TOKEN" \
   "$API_URL/v1/lists/1"
 ```
+
+## Profiling
+```
+curl http://localhost:8888/debug/pprof/
+```

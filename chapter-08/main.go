@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"math/rand"
 	"net/http"
+	_ "net/http/pprof"
 	"os"
 	"strings"
 	"time"
@@ -201,6 +202,7 @@ func handleGetList(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		listsCache.Add(id, *dbList)
+		list = *dbList
 	}
 
 	data, err := json.Marshal(list)
