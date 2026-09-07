@@ -21,7 +21,7 @@ import (
 	lru "github.com/hashicorp/golang-lru/v2"
 )
 
-// ShopingList represents a shopping list with items
+// ShoppingList represents a shopping list with items
 // @Description Shopping list with items
 type ShoppingList struct {
 	ID    int      `json:"id"`
@@ -108,8 +108,8 @@ func main() {
 // @Accept json
 // @Produce json
 // @Security BearerAuth
-// @Param list body ShopingList true "Shopping list data"
-// @Success 201 {object} ShopingList
+// @Param list body ShoppingList true "Shopping list data"
+// @Success 201 {object} ShoppingList
 // @Failure 400 {string} string "Bad Request"
 // @Failure 401 {string} string "Unauthorized"
 // @Failure 403 {string} string "Forbidden"
@@ -146,7 +146,7 @@ func handleCreateList(w http.ResponseWriter, r *http.Request) {
 // @Accept json
 // @Produce json
 // @Security BearerAuth
-// @Success 200 {array} ShopingList
+// @Success 200 {array} ShoppingList
 // @Failure 401 {string} string "Unauthorized"
 // @Router /lists [get]
 func handleListLists(w http.ResponseWriter, r *http.Request) {
@@ -173,11 +173,11 @@ func handleListLists(w http.ResponseWriter, r *http.Request) {
 // @Description Delete a shopping list by its ID
 // @Tags lists
 // @Security BearerAuth
-// @Param id path string true \"Shopping list ID\"
-// @Success 204 \"No Content\"
-// @Failure 401 {string} string \"Unauthorized\"
-// @Failure 403 {string} string \"Forbidden\"
-// @Failure 404 {string} string \"List not found\"
+// @Param id path string true "Shopping list ID"
+// @Success 204 "No Content"
+// @Failure 401 {string} string "Unauthorized"
+// @Failure 403 {string} string "Forbidden"
+// @Failure 404 {string} string "List not found"
 // @Router /lists/{id} [delete]
 func handleDeleteList(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("id")
@@ -197,14 +197,14 @@ func handleDeleteList(w http.ResponseWriter, r *http.Request) {
 // @Accept json
 // @Produce json
 // @Security BearerAuth
-// @Param id path string true \"Shopping list ID\"
-// @Param list body ShopingList true \"Updated shopping list data\"
-// @Success 200 {object} ShopingList
-// @Failure 400 {string} string \"Bad Request\"
-// @Failure 401 {string} string \"Unauthorized\"
-// @Failure 403 {string} string \"Forbidden\"
-// @Failure 404 {string} string \"List not found\"
-// @Failure 500 {string} string \"Internal Server Error\"
+// @Param id path string true "Shopping list ID"
+// @Param list body ShoppingList true "Updated shopping list data"
+// @Success 200 {object} ShoppingList
+// @Failure 400 {string} string "Bad Request"
+// @Failure 401 {string} string "Unauthorized"
+// @Failure 403 {string} string "Forbidden"
+// @Failure 404 {string} string "List not found"
+// @Failure 500 {string} string "Internal Server Error"
 // @Router /lists/{id} [put]
 func handleUpdateList(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("id")
@@ -235,14 +235,14 @@ func handleUpdateList(w http.ResponseWriter, r *http.Request) {
 // @Accept json
 // @Produce json
 // @Security BearerAuth
-// @Param id path string true \"Shopping list ID\"
-// @Param patch body ShoppingListPatch true \"Partial shopping list data\"
-// @Success 200 {object} ShopingList
-// @Failure 400 {string} string \"Bad Request\"
-// @Failure 401 {string} string \"Unauthorized\"
-// @Failure 403 {string} string \"Forbidden\"
-// @Failure 404 {string} string \"List not found\"
-// @Failure 500 {string} string \"Internal Server Error\"
+// @Param id path string true "Shopping list ID"
+// @Param patch body ShoppingListPatch true "Partial shopping list data"
+// @Success 200 {object} ShoppingList
+// @Failure 400 {string} string "Bad Request"
+// @Failure 401 {string} string "Unauthorized"
+// @Failure 403 {string} string "Forbidden"
+// @Failure 404 {string} string "List not found"
+// @Failure 500 {string} string "Internal Server Error"
 // @Router /lists/{id} [patch]
 func handlePatchList(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("id")
@@ -279,11 +279,11 @@ func handlePatchList(w http.ResponseWriter, r *http.Request) {
 // @Tags lists
 // @Produce json
 // @Security BearerAuth
-// @Param id path string true \"Shopping list ID\"
-// @Success 200 {object} ShopingList
-// @Failure 401 {string} string \"Unauthorized\"
-// @Failure 404 {string} string \"List not found\"
-// @Failure 500 {string} string \"Internal Server Error\"
+// @Param id path string true "Shopping list ID"
+// @Success 200 {object} ShoppingList
+// @Failure 401 {string} string "Unauthorized"
+// @Failure 404 {string} string "List not found"
+// @Failure 500 {string} string "Internal Server Error"
 // @Router /lists/{id} [get]
 func handleGetList(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("id")
@@ -316,14 +316,14 @@ func handleGetList(w http.ResponseWriter, r *http.Request) {
 // @Accept json
 // @Produce json
 // @Security BearerAuth
-// @Param id path string true \"Shopping list ID\"
-// @Param item body ListPushAction true \"Item to add to the list\"
-// @Success 200 {object} ShopingList
-// @Failure 400 {string} string \"Bad Request\"
-// @Failure 401 {string} string \"Unauthorized\"
-// @Failure 403 {string} string \"Forbidden\"
-// @Failure 404 {string} string \"List not found\"
-// @Failure 500 {string} string \"Internal Server Error\"
+// @Param id path string true "Shopping list ID"
+// @Param item body ListPushAction true "Item to add to the list"
+// @Success 200 {object} ShoppingList
+// @Failure 400 {string} string "Bad Request"
+// @Failure 401 {string} string "Unauthorized"
+// @Failure 403 {string} string "Forbidden"
+// @Failure 404 {string} string "List not found"
+// @Failure 500 {string} string "Internal Server Error"
 // @Router /lists/{id}/push [post]
 func handleListPush(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("id")
@@ -361,10 +361,10 @@ func handleListPush(w http.ResponseWriter, r *http.Request) {
 // @Tags authentication
 // @Accept json
 // @Produce json
-// @Param credentials body LoginRequest true \"User login credentials\"
-// @Success 200 {object} map[string]string \"token\"
-// @Failure 401 {string} string \"Unauthorized\"
-// @Failure 500 {string} string \"Internal Server Error\"
+// @Param credentials body LoginRequest true "User login credentials"
+// @Success 200 {object} map[string]string "token"
+// @Failure 401 {string} string "Unauthorized"
+// @Failure 500 {string} string "Internal Server Error"
 // @Router /login [post]
 func handleLogin(w http.ResponseWriter, r *http.Request) {
 	var data LoginRequest
