@@ -1,0 +1,405 @@
+openapi: 3.0.0
+info:
+  contact: {}
+  description: User login request structure
+  title: Shopping List API
+  version: "0.1"
+paths:
+  /lists:
+    get:
+      description: Get all shopping lists for the authenticated user
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: "#/components/schemas/main.ShoppingList"
+                type: array
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: string
+      security:
+        - BearerAuth: []
+      summary: List all shopping lists
+      tags:
+        - lists
+    post:
+      description: Create a new shopping list with the provided data
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/main.ShoppingList"
+        description: Shopping list data
+        required: true
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/main.ShoppingList"
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                type: string
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: string
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                type: string
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                type: string
+      security:
+        - BearerAuth: []
+      summary: Create a new shopping list
+      tags:
+        - lists
+  "/lists/{id}":
+    delete:
+      description: Delete a shopping list by its ID
+      parameters:
+        - description: Shopping list ID
+          in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: No Content
+        "401":
+          description: Unauthorized
+          content:
+            "*/*":
+              schema:
+                type: string
+        "403":
+          description: Forbidden
+          content:
+            "*/*":
+              schema:
+                type: string
+        "404":
+          description: List not found
+          content:
+            "*/*":
+              schema:
+                type: string
+      security:
+        - BearerAuth: []
+      summary: Delete a shopping list
+      tags:
+        - lists
+    get:
+      description: Retrieve a shopping list by its ID with caching support
+      parameters:
+        - description: Shopping list ID
+          in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/main.ShoppingList"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: string
+        "404":
+          description: List not found
+          content:
+            application/json:
+              schema:
+                type: string
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                type: string
+      security:
+        - BearerAuth: []
+      summary: Get a shopping list by ID
+      tags:
+        - lists
+    patch:
+      description: Update specific fields of a shopping list (partial update)
+      parameters:
+        - description: Shopping list ID
+          in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/main.ShoppingListPatch"
+        description: Partial shopping list data
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/main.ShoppingList"
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                type: string
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: string
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                type: string
+        "404":
+          description: List not found
+          content:
+            application/json:
+              schema:
+                type: string
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                type: string
+      security:
+        - BearerAuth: []
+      summary: Partially update a shopping list
+      tags:
+        - lists
+    put:
+      description: Update a shopping list with new data (full replacement)
+      parameters:
+        - description: Shopping list ID
+          in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/main.ShoppingList"
+        description: Updated shopping list data
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/main.ShoppingList"
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                type: string
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: string
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                type: string
+        "404":
+          description: List not found
+          content:
+            application/json:
+              schema:
+                type: string
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                type: string
+      security:
+        - BearerAuth: []
+      summary: Update a shopping list
+      tags:
+        - lists
+  "/lists/{id}/push":
+    post:
+      description: Add a new item to an existing shopping list
+      parameters:
+        - description: Shopping list ID
+          in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/main.ListPushAction"
+        description: Item to add to the list
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/main.ShoppingList"
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                type: string
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: string
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                type: string
+        "404":
+          description: List not found
+          content:
+            application/json:
+              schema:
+                type: string
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                type: string
+      security:
+        - BearerAuth: []
+      summary: Add an item to a shopping list
+      tags:
+        - lists
+  /login:
+    post:
+      description: Authenticate user credentials and return a session token
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/main.LoginRequest"
+        description: User login credentials
+        required: true
+      responses:
+        "200":
+          description: token
+          content:
+            application/json:
+              schema:
+                additionalProperties:
+                  type: string
+                type: object
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: string
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                type: string
+      summary: User login
+      tags:
+        - authentication
+servers:
+  - url: //my-shopping-lists.com/api
+components:
+  securitySchemes:
+    BearerAuth:
+      description: Type "Bearer" followed by a space and the JWT token
+      in: header
+      name: Authorization
+      type: apiKey
+  schemas:
+    main.ListPushAction:
+      description: Action to push an item to a shopping list
+      properties:
+        item:
+          type: string
+      type: object
+    main.LoginRequest:
+      description: User login request structure
+      properties:
+        password:
+          type: string
+        username:
+          type: string
+      type: object
+    main.ShoppingList:
+      description: Shopping list with items
+      properties:
+        id:
+          type: integer
+        items:
+          items:
+            type: string
+          type: array
+        name:
+          type: string
+      type: object
+    main.ShoppingListPatch:
+      description: Partial shopping list update structure
+      properties:
+        items:
+          items:
+            type: string
+          type: array
+        name:
+          type: string
+      type: object
