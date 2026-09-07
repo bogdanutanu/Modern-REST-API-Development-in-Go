@@ -22,3 +22,9 @@ We can now format the docs in human readable HTML, with tools such as Redoc:
 ```
 npx @redocly/cli build-docs docs/openapi.yaml
 ```
+
+We can also generate a client in many different languages, based on the OpenAPI definition (need to have Java installed for some 
+reason):
+```
+npx @openapitools/openapi-generator-cli generate -i docs/openapi.yaml -g go -o client
+```
