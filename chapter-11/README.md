@@ -9,5 +9,11 @@ go install github.com/swaggo/swag/cmd/swag@latest
 
 Create the Swagger 2.0 documentation:
 ```
+~/go/bin/swag init
+```
+
+Now, having Node installed, we'll use a Node package to generate 
+the OpenAPI 3.0 docs from the OpenAPI 2.0:
+```
 
 ```
