@@ -15,5 +15,10 @@ Create the Swagger 2.0 documentation:
 Now, having Node installed, we'll use a Node package to generate 
 the OpenAPI 3.0 docs from the OpenAPI 2.0:
 ```
+npx -p swagger2openapi swagger2openapi --yaml --outfile docs/openapi.yaml docs/swagger.yaml
+```
 
+We can now format the docs in human readable HTML, with tools such as Redoc:
+```
+npx @redocly/cli build-docs docs/openapi.yaml
 ```
