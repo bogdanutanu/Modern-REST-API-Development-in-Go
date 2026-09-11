@@ -103,14 +103,14 @@ func main() {
 	}
 	defer closer.Close()
 
-	http.HandleFunc("GET /lists", addCacheHeaders(authRequired(handleListLists)))
+	http.HandleFunc("GET /lists", addCacheHeaders(MetricsMiddleware(authRequired(handleListLists))))
 	http.HandleFunc("POST /lists", MetricsMiddleware(adminRequired(handleCreateList)))
-	http.HandleFunc("GET /lists/{id}", authRequired(handleGetList))
-	http.HandleFunc("PUT /lists/{id}", adminRequired(handleUpdateList))
-	http.HandleFunc("DELETE /lists/{id}", adminRequired(handleDeleteList))
-	http.HandleFunc("PATCH /lists/{id}", adminRequired(handlePatchList))
-	http.HandleFunc("POST /lists/{id}/push", adminRequired(handleListPush))
-	http.HandleFunc("POST /login", handleLogin)
+	http.HandleFunc("GET /lists/{id}", MetricsMiddleware(authRequired(handleGetList)))
+	http.HandleFunc("PUT /lists/{id}", MetricsMiddleware(adminRequired(handleUpdateList)))
+	http.HandleFunc("DELETE /lists/{id}", MetricsMiddleware(adminRequired(handleDeleteList)))
+	http.HandleFunc("PATCH /lists/{id}", MetricsMiddleware(adminRequired(handlePatchList)))
+	http.HandleFunc("POST /lists/{id}/push", MetricsMiddleware(adminRequired(handleListPush)))
+	http.HandleFunc("POST /login", MetricsMiddleware(handleLogin))
 
 	http.Handle("/metrics", promhttp.Handler())
 
