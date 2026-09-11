@@ -325,6 +325,7 @@ func handleGetList(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		listsCache.Add(id, *dbList)
+		list = *dbList
 	}
 
 	data, err := json.Marshal(list)

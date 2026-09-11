@@ -74,6 +74,13 @@ curl -X DELETE \
   "$API_URL/v1/lists/1"
 ```
 
+## Add element to an existing list
+```
+curl -X POST "$API_URL/lists/$LIST_ID/push" \
+  -H "Authorization: Bearer $TOKEN" \
+  --data '{"item": "Grogu"}'
+```
+
 ## Profiling
 ```
 curl http://localhost:8888/debug/pprof/
