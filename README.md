@@ -74,7 +74,31 @@ curl -X DELETE \
   "$API_URL/v1/lists/1"
 ```
 
+## Add element to an existing list
+```
+curl -X POST "$API_URL/lists/$LIST_ID/push" \
+  -H "Authorization: Bearer $TOKEN" \
+  --data '{"item": "Mando"}'
+```
+
 ## Profiling
 ```
 curl http://localhost:8888/debug/pprof/
+```
+
+## Traces
+```
+curl http://localhost:6831/
+```
+
+Launch the Jaeger container with port 6831 over UDP to listen to traces posted by the app:
+```
+docker run --rm --name jaeger \
+  -p 16686:16686 \
+  -p 6831:6831/udp \
+  -p 4317:4317 \
+  -p 4318:4318 \
+  -p 5778:5778 \
+  -p 9411:9411 \
+  cr.jaegertracing.io/jaegertracing/jaeger:2.20.0
 ```

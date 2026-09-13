@@ -6,7 +6,7 @@
 
 set -eo pipefail
 
-API_PROTOCOL="${API_PROTOCOL:-https}"
+API_PROTOCOL="${API_PROTOCOL:-http}"
 API_URL="${API_URL:-${API_PROTOCOL}://localhost:8888}"
 USERNAME="${USERNAME:-admin}"
 PASSWORD="${PASSWORD:-password}"
