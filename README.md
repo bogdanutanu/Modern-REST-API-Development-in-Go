@@ -102,3 +102,13 @@ docker run --rm --name jaeger \
   -p 9411:9411 \
   cr.jaegertracing.io/jaegertracing/jaeger:2.20.0
 ```
+
+### Generate mocks
+
+Use this command to regenerate the repository mock every time there's a change in its interface:
+```
+go run go.uber.org/mock/mockgen@latest \
+  -source repository.go \
+  -package main \
+  -destination repository_mock.go
+```

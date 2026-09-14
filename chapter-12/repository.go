@@ -14,14 +14,14 @@ import (
 
 type RepositoryInterface interface {
 	Init() error
-	AddSession(username string) (*Session, error)
-	GetSession(token string) (*Session, error)
+	AddSession(parentSpan opentracing.Span, username string) (*Session, error)
+	GetSession(parentSpan opentracing.Span, token string) (*Session, error)
 	CreateShoppingList(parentSpan opentracing.Span, list *ShoppingList) error
-	GetAllShoppingLists() ([]ShoppingList, error)
-	GetShoppingList(id string) (*ShoppingList, error)
-	UpdateShoppingList(id string, list *ShoppingList) error
-	DeleteShoppingList(id string) error
-	PatchShoppingList(id string, patch *ShoppingListPatch) error
+	GetAllShoppingLists(parentSpan opentracing.Span) ([]ShoppingList, error)
+	GetShoppingList(parentSpan opentracing.Span, id string) (*ShoppingList, error)
+	UpdateShoppingList(parentSpan opentracing.Span, id string, list *ShoppingList) error
+	DeleteShoppingList(parentSpan opentracing.Span, id string) error
+	PatchShoppingList(parentSpan opentracing.Span, id string, patch *ShoppingListPatch) error
 }
 
 type Repository struct {
@@ -49,7 +49,9 @@ func (r *Repository) Init() error {
 	return nil
 }
 
-func (r *Repository) AddSession(username string) (*Session, error) {
+func (r *Repository) AddSession(parentSpan opentracing.Span, username string) (*Session, error) {
+	span := opentracing.StartSpan("AddSessionRepository", opentracing.ChildOf(parentSpan.Context()))
+	defer span.Finish()
 	token := strconv.Itoa(rand.Intn(100000000000))
 	session := Session{Token: token, Expires: time.Now().Add(7 * 24 * time.Hour), Username: username}
 	query := sq.Insert("sessions").Columns("token", "expires", "username").Values(session.Token, session.Expires, session.Username)
@@ -60,7 +62,9 @@ func (r *Repository) AddSession(username string) (*Session, error) {
 	return &session, nil
 }
 
-func (r *Repository) GetSession(token string) (*Session, error) {
+func (r *Repository) GetSession(parentSpan opentracing.Span, token string) (*Session, error) {
+	span := opentracing.StartSpan("GetSessionRepository", opentracing.ChildOf(parentSpan.Context()))
+	defer span.Finish()
 	query := sq.Select("token", "expires", "username").From("sessions").Where(sq.Eq{"token": token}, sq.Gt{"expires": time.Now()})
 	row := query.RunWith(r.db).QueryRow()
 	session := Session{}
@@ -71,7 +75,7 @@ func (r *Repository) GetSession(token string) (*Session, error) {
 }
 
 func (r *Repository) CreateShoppingList(parentSpan opentracing.Span, list *ShoppingList) error {
-	span := opentracing.StartSpan("AddShopingList",
+	span := opentracing.StartSpan("CreateShoppingListRepository",
 		opentracing.ChildOf(parentSpan.Context()))
 	defer span.Finish()
 	span.LogKV("my-custom-data", "relevant data in the trace")
@@ -80,7 +84,9 @@ func (r *Repository) CreateShoppingList(parentSpan opentracing.Span, list *Shopp
 	return err
 }
 
-func (r *Repository) GetAllShoppingLists() ([]ShoppingList, error) {
+func (r *Repository) GetAllShoppingLists(parentSpan opentracing.Span) ([]ShoppingList, error) {
+	span := opentracing.StartSpan("GetAllShoppingListsRepository", opentracing.ChildOf(parentSpan.Context()))
+	defer span.Finish()
 	query := sq.Select("id", "name", "items").From("shopping_lists")
 	rows, err := query.RunWith(r.db).Query()
 	if err != nil {
@@ -104,7 +110,9 @@ func (r *Repository) GetAllShoppingLists() ([]ShoppingList, error) {
 	return lists, nil
 }
 
-func (r *Repository) GetShoppingList(id string) (*ShoppingList, error) {
+func (r *Repository) GetShoppingList(parentSpan opentracing.Span, id string) (*ShoppingList, error) {
+	span := opentracing.StartSpan("GetShoppingListRepository", opentracing.ChildOf(parentSpan.Context()))
+	defer span.Finish()
 	query := sq.Select("id", "name", "items").From("shopping_lists").Where(sq.Eq{"id": id})
 	row := query.RunWith(r.db).QueryRow()
 
@@ -120,19 +128,25 @@ func (r *Repository) GetShoppingList(id string) (*ShoppingList, error) {
 	return &list, nil
 }
 
-func (r *Repository) UpdateShoppingList(id string, list *ShoppingList) error {
+func (r *Repository) UpdateShoppingList(parentSpan opentracing.Span, id string, list *ShoppingList) error {
+	span := opentracing.StartSpan("UpdateShoppingListRepository", opentracing.ChildOf(parentSpan.Context()))
+	defer span.Finish()
 	query := sq.Update("shopping_lists").Where(sq.Eq{"id": id}).Set("name", list.Name).Set("items", strings.Join(list.Items, ","))
 	_, err := query.RunWith(r.db).Exec()
 	return err
 }
 
-func (r *Repository) DeleteShoppingList(id string) error {
+func (r *Repository) DeleteShoppingList(parentSpan opentracing.Span, id string) error {
+	span := opentracing.StartSpan("DeleteShoppingListRepository", opentracing.ChildOf(parentSpan.Context()))
+	defer span.Finish()
 	query := sq.Delete("shopping_lists").Where(sq.Eq{"id": id})
 	_, err := query.RunWith(r.db).Exec()
 	return err
 }
 
-func (r *Repository) PatchShoppingList(id string, patch *ShoppingListPatch) error {
+func (r *Repository) PatchShoppingList(parentSpan opentracing.Span, id string, patch *ShoppingListPatch) error {
+	span := opentracing.StartSpan("PatchShoppingListRepository", opentracing.ChildOf(parentSpan.Context()))
+	defer span.Finish()
 	query := sq.Update("shopping_lists").Where(sq.Eq{"id": id})
 	if patch.Name != nil {
 		query = query.Set("name", *patch.Name)
