@@ -30,7 +30,7 @@ Set the protocol once before running the requests. It defaults to `https`; use
 `API_PROTOCOL=http` to connect to a server without TLS.
 
 ```sh
-API_PROTOCOL="${API_PROTOCOL:-https}"
+API_PROTOCOL="${API_PROTOCOL:-http}"
 API_URL="${API_PROTOCOL}://localhost:8888"
 ```
 
@@ -71,7 +71,7 @@ curl -X POST "$API_URL/lists" \
 ```
 curl -X DELETE \
   -H "Authorization: Bearer $TOKEN" \
-  "$API_URL/v1/lists/1"
+  "$API_URL/lists/1"
 ```
 
 ## Add element to an existing list
@@ -101,4 +101,14 @@ docker run --rm --name jaeger \
   -p 5778:5778 \
   -p 9411:9411 \
   cr.jaegertracing.io/jaegertracing/jaeger:2.20.0
+```
+
+### Generate mocks
+
+Use this command to regenerate the repository mock every time there's a change in its interface:
+```
+go run go.uber.org/mock/mockgen@latest \
+  -source repository.go \
+  -package main \
+  -destination repository_mock.go
 ```

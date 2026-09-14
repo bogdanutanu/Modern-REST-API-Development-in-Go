@@ -34,7 +34,7 @@ func TestHandleLogin(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	mock := NewMockRepositoryInterface(ctrl)
 	repository = mock
-	mock.EXPECT().AddSession("admin").Return(
+	mock.EXPECT().AddSession(gomock.Any(), "admin").Return(
 		&Session{
 			"test-token", time.Now().Add(time.Hour),
 			"admin",

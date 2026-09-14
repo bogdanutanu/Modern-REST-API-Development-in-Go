@@ -180,7 +180,12 @@ func handleCreateList(w http.ResponseWriter, r *http.Request) {
 // @Failure 401 {string} string "Unauthorized"
 // @Router /lists [get]
 func handleListLists(w http.ResponseWriter, r *http.Request) {
-	lists, err := repository.GetAllShoppingLists()
+	parentSpan := opentracing.GlobalTracer().StartSpan("handleListLists")
+	defer parentSpan.Finish()
+	ext.HTTPMethod.Set(parentSpan, r.Method)
+	ext.HTTPUrl.Set(parentSpan, r.URL.Path)
+
+	lists, err := repository.GetAllShoppingLists(parentSpan)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -210,8 +215,13 @@ func handleListLists(w http.ResponseWriter, r *http.Request) {
 // @Failure 404 {string} string \"List not found\"
 // @Router /lists/{id} [delete]
 func handleDeleteList(w http.ResponseWriter, r *http.Request) {
+	parentSpan := opentracing.GlobalTracer().StartSpan("handleDeleteList")
+	defer parentSpan.Finish()
+	ext.HTTPMethod.Set(parentSpan, r.Method)
+	ext.HTTPUrl.Set(parentSpan, r.URL.Path)
+
 	id := r.PathValue("id")
-	err := repository.DeleteShoppingList(id)
+	err := repository.DeleteShoppingList(parentSpan, id)
 	if err != nil {
 		http.Error(w, "List not found", http.StatusNotFound)
 		return
@@ -237,6 +247,11 @@ func handleDeleteList(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {string} string \"Internal Server Error\"
 // @Router /lists/{id} [put]
 func handleUpdateList(w http.ResponseWriter, r *http.Request) {
+	parentSpan := opentracing.GlobalTracer().StartSpan("handleUpdateList")
+	defer parentSpan.Finish()
+	ext.HTTPMethod.Set(parentSpan, r.Method)
+	ext.HTTPUrl.Set(parentSpan, r.URL.Path)
+
 	id := r.PathValue("id")
 	var updatedList ShoppingList
 	err := json.NewDecoder(r.Body).Decode(&updatedList)
@@ -245,7 +260,7 @@ func handleUpdateList(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = repository.UpdateShoppingList(id, &updatedList)
+	err = repository.UpdateShoppingList(parentSpan, id, &updatedList)
 	if err != nil {
 		http.Error(w, "List not found", http.StatusNotFound)
 		return
@@ -275,6 +290,11 @@ func handleUpdateList(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {string} string \"Internal Server Error\"
 // @Router /lists/{id} [patch]
 func handlePatchList(w http.ResponseWriter, r *http.Request) {
+	parentSpan := opentracing.GlobalTracer().StartSpan("handlePatchList")
+	defer parentSpan.Finish()
+	ext.HTTPMethod.Set(parentSpan, r.Method)
+	ext.HTTPUrl.Set(parentSpan, r.URL.Path)
+
 	id := r.PathValue("id")
 	var patch ShoppingListPatch
 	err := json.NewDecoder(r.Body).Decode(&patch)
@@ -283,14 +303,14 @@ func handlePatchList(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = repository.PatchShoppingList(id, &patch)
+	err = repository.PatchShoppingList(parentSpan, id, &patch)
 	if err != nil {
 		http.Error(w, "List not found", http.StatusNotFound)
 		return
 	}
 	listsCache.Remove(id)
 
-	list, err := repository.GetShoppingList(id)
+	list, err := repository.GetShoppingList(parentSpan, id)
 	if err != nil {
 		http.Error(w, "List not found", http.StatusNotFound)
 		return
@@ -316,10 +336,15 @@ func handlePatchList(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {string} string \"Internal Server Error\"
 // @Router /lists/{id} [get]
 func handleGetList(w http.ResponseWriter, r *http.Request) {
+	parentSpan := opentracing.GlobalTracer().StartSpan("handleGetList")
+	defer parentSpan.Finish()
+	ext.HTTPMethod.Set(parentSpan, r.Method)
+	ext.HTTPUrl.Set(parentSpan, r.URL.Path)
+
 	id := r.PathValue("id")
 	list, ok := listsCache.Get(id)
 	if !ok {
-		dbList, err := repository.GetShoppingList(id)
+		dbList, err := repository.GetShoppingList(parentSpan, id)
 		if err != nil {
 			http.Error(w, "List not found", http.StatusNotFound)
 			return
@@ -357,6 +382,11 @@ func handleGetList(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {string} string \"Internal Server Error\"
 // @Router /lists/{id}/push [post]
 func handleListPush(w http.ResponseWriter, r *http.Request) {
+	parentSpan := opentracing.GlobalTracer().StartSpan("handleListPush")
+	defer parentSpan.Finish()
+	ext.HTTPMethod.Set(parentSpan, r.Method)
+	ext.HTTPUrl.Set(parentSpan, r.URL.Path)
+
 	id := r.PathValue("id")
 	var item ListPushAction
 	err := json.NewDecoder(r.Body).Decode(&item)
@@ -365,14 +395,14 @@ func handleListPush(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	list, err := repository.GetShoppingList(id)
+	list, err := repository.GetShoppingList(parentSpan, id)
 	if err != nil {
 		http.Error(w, "List not found", http.StatusNotFound)
 		return
 	}
 
 	list.Items = append(list.Items, item.Item)
-	err = repository.UpdateShoppingList(id, list)
+	err = repository.UpdateShoppingList(parentSpan, id, list)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -398,11 +428,16 @@ func handleListPush(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {string} string \"Internal Server Error\"
 // @Router /login [post]
 func handleLogin(w http.ResponseWriter, r *http.Request) {
+	parentSpan := opentracing.GlobalTracer().StartSpan("handleLogin")
+	defer parentSpan.Finish()
+	ext.HTTPMethod.Set(parentSpan, r.Method)
+	ext.HTTPUrl.Set(parentSpan, r.URL.Path)
+
 	var data LoginRequest
 	json.NewDecoder(r.Body).Decode(&data)
 	user := allUsers[data.Username]
 	if user != nil && user.Password == data.Password {
-		session, err := repository.AddSession(user.Username)
+		session, err := repository.AddSession(parentSpan, user.Username)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -416,13 +451,18 @@ func handleLogin(w http.ResponseWriter, r *http.Request) {
 
 func authRequired(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		parentSpan := opentracing.GlobalTracer().StartSpan("authRequired")
+		defer parentSpan.Finish()
+		ext.HTTPMethod.Set(parentSpan, r.Method)
+		ext.HTTPUrl.Set(parentSpan, r.URL.Path)
+
 		token := r.Header.Get("Authorization")
 		if !strings.HasPrefix(token, "Bearer ") {
 			http.Error(w, "unauthorized", http.StatusUnauthorized)
 			return
 		}
 		token = token[7:]
-		_, err := repository.GetSession(token)
+		_, err := repository.GetSession(parentSpan, token)
 		if err != nil {
 			http.Error(w, "unauthorized", http.StatusUnauthorized)
 			return
@@ -433,9 +473,14 @@ func authRequired(next http.HandlerFunc) http.HandlerFunc {
 
 func adminRequired(next http.HandlerFunc) http.HandlerFunc {
 	return authRequired(func(w http.ResponseWriter, r *http.Request) {
+		parentSpan := opentracing.GlobalTracer().StartSpan("adminRequired")
+		defer parentSpan.Finish()
+		ext.HTTPMethod.Set(parentSpan, r.Method)
+		ext.HTTPUrl.Set(parentSpan, r.URL.Path)
+
 		token := r.Header.Get("Authorization")
 		token = token[7:]
-		session, err := repository.GetSession(token)
+		session, err := repository.GetSession(parentSpan, token)
 		if err != nil {
 			http.Error(w, "unauthorized", http.StatusUnauthorized)
 			return
