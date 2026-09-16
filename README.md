@@ -55,11 +55,6 @@ curl -X POST \
 
 Run `eval "$(./login.sh)"` to store the token into the TOKEN env var.
 
-## List all lists
-```
-curl "$API_URL/lists" -H "Authorization: Bearer $TOKEN"
-```
-
 ## Create List
 ```
 curl -X POST "$API_URL/lists" \
@@ -67,18 +62,28 @@ curl -X POST "$API_URL/lists" \
   --data '{"id": 1, "name": "my first shopping list", "items": ["eggs", "milk"]}'
 ```
 
+## List all lists
+```
+curl "$API_URL/lists" -H "Authorization: Bearer $TOKEN" | jq
+```
+
+## Get List
+```
+curl "$API_URL/lists/$LIST_ID" -H "Authorization: Bearer $TOKEN" | jq
+```
+
 ## Delete
 ```
 curl -X DELETE \
   -H "Authorization: Bearer $TOKEN" \
-  "$API_URL/lists/1"
+  "$API_URL/lists/$LIST_ID"
 ```
 
 ## Add element to an existing list
 ```
 curl -X POST "$API_URL/lists/$LIST_ID/push" \
   -H "Authorization: Bearer $TOKEN" \
-  --data '{"item": "Mando"}'
+  --data '{"item": "Princesa"}'
 ```
 
 ## Profiling

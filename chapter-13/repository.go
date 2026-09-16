@@ -72,11 +72,11 @@ func (r *Repository) GetUserByUsername(username string) (*User, error) {
 }
 
 func (r *Repository) AddSession(username string) (*Session, error) {
-	var user User
-	result := r.db.Where("username = ?", username).First(&user)
-	if result.Error != nil {
-		return nil, result.Error
+	user, err := r.GetUserByUsername(username)
+	if err != nil {
+		return nil, err
 	}
+
 	token := strconv.Itoa(rand.Intn(100000000000))
 	session := Session{Token: token, Expires: time.Now().Add(7 * 24 * time.Hour), UserID: user.ID}
 	createResult := r.db.Create(&session)
