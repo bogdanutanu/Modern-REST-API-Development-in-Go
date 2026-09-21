@@ -15,7 +15,7 @@ TOKEN=$(curl -s -X POST \
   -d "{\"username\": \"${USERNAME}\", \"password\": \"${PASSWORD}\"}" \
   -H 'Origin: https://example.com' \
   -H "Content-Type: application/json" \
-  "${API_URL}/login" | jq -r '.token')
+  "${API_URL}/api/login" | jq -r '.token')
 
 if [ -z "$TOKEN" ] || [ "$TOKEN" = "null" ]; then
   echo "echo 'Failed to obtain token' >&2" 

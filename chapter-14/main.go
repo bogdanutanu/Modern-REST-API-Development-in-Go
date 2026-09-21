@@ -17,6 +17,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/golang-jwt/jwt/v5"
 	lru "github.com/hashicorp/golang-lru/v2"
 	"github.com/labstack/echo-contrib/echoprometheus"
 	echojwt "github.com/labstack/echo-jwt/v4"
@@ -79,12 +80,17 @@ var metricsService *Metrics
 func main() {
 	e := echo.New()
 	api := e.Group("/api")
-	api.Use(authRequired)
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
 		AllowOrigins: []string{"https://example.com"},
-		AllowMethods: []string{http.MethodGet, http.MethodPost, http.MethodPut, http.MethodDelete},
+		AllowMethods: []string{http.MethodGet, http.MethodPost, http.MethodPut, http.MethodPatch, http.MethodDelete},
+		AllowHeaders: []string{echo.HeaderOrigin, echo.HeaderContentType, echo.HeaderAccept, echo.HeaderAuthorization},
 	}))
-	e.Use(echojwt.JWT([]byte("my-secret")))
+	e.Use(echojwt.WithConfig(echojwt.Config{
+		SigningKey: []byte("my-secret"),
+		Skipper: func(c echo.Context) bool {
+			return c.Path() == "/api/login"
+		},
+	}))
 	e.Use(echoprometheus.NewMiddleware("myapp"))
 	e.GET("/metrics", echoprometheus.NewHandler())
 
@@ -120,7 +126,7 @@ func main() {
 	api.PATCH("/lists/:id", adminRequired(handlePatchList))
 	api.DELETE("/lists/:id", adminRequired(handleDeleteList))
 	api.POST("/lists/:id/push", adminRequired(handleListPush))
-	e.Logger.Fatal(e.Start(":8080"))
+	e.Logger.Fatal(e.Start(":8888"))
 }
 
 // handleCreateList creates a new shopping list
@@ -335,14 +341,23 @@ func handleLogin(c echo.Context) error {
 	if err := c.Bind(&data); err != nil {
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Invalid request body"})
 	}
-	
+
 	user, err := repository.GetUserByUsername(data.Username)
 	if err == nil && user.Password == data.Password {
-		session, err := repository.AddSession(user.Username)
+		if _, err := repository.AddSession(user.Username); err != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+		}
+
+		token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+			"sub":  user.ID,
+			"role": user.Role,
+			"exp":  time.Now().Add(24 * time.Hour).Unix(),
+		})
+		signedToken, err := token.SignedString([]byte("my-secret"))
 		if err != nil {
 			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 		}
-		return c.JSON(http.StatusOK, map[string]string{"token": session.Token})
+		return c.JSON(http.StatusOK, map[string]string{"token": signedToken})
 	}
 	return echo.NewHTTPError(http.StatusUnauthorized, "Invalid credentials")
 }
@@ -368,14 +383,13 @@ func authRequired(next echo.HandlerFunc) echo.HandlerFunc {
 
 func adminRequired(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		session := c.Get("session").(*Session)
-
-		user, err := repository.GetUser(session.UserID)
-		if err != nil {
+		token, ok := c.Get("user").(*jwt.Token)
+		if !ok {
 			return echo.NewHTTPError(http.StatusForbidden, "Access denied")
 		}
 
-		if user.Role != "admin" {
+		claims, ok := token.Claims.(jwt.MapClaims)
+		if !ok || claims["role"] != "admin" {
 			return echo.NewHTTPError(http.StatusForbidden, "Admin access required")
 		}
 
