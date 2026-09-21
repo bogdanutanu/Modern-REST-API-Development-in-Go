@@ -23,14 +23,14 @@ func TestAddCacheHeaders(t *testing.T) {
 	req := httptest.NewRequest("GET", "/lists", nil)
 	rec := httptest.NewRecorder()
 	c := e.NewContext(req, rec)
-	
+
 	middleware := addCacheHeaders()
 	handler := middleware(testHandler)
 	err := handler(c)
 	if err != nil {
 		t.Errorf("addCacheHeaders middleware error = %v", err)
 	}
-	
+
 	if rec.Header().Get("Cache-Control") != "public, max-age=300" {
 		t.Errorf("Not valid Cache-Control found, got %v, want %v", rec.Header().Get("Cache-Control"), "public, max-age=300")
 	}
@@ -43,14 +43,14 @@ func TestHandleLogin(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	mock := NewMockRepositoryInterface(ctrl)
 	repository = mock
-	mock.EXPECT().GetUserByUsername("admin").Return(
+	mock.EXPECT().GetUserByUsername(gomock.Any(), "admin").Return(
 		&User{
 			Username: "admin",
 			Password: "password",
 		},
 		nil,
 	)
-	mock.EXPECT().AddSession("admin").Return(
+	mock.EXPECT().AddSession(gomock.Any(), "admin").Return(
 		&Session{
 			Token:   "test-token",
 			Expires: time.Now().Add(time.Hour),

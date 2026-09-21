@@ -23,6 +23,8 @@ import (
 	echojwt "github.com/labstack/echo-jwt/v4"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
+	"github.com/opentracing/opentracing-go"
+	"github.com/opentracing/opentracing-go/ext"
 	"gorm.io/gorm"
 )
 
@@ -144,11 +146,14 @@ func main() {
 // @Failure 500 {string} string "Internal Server Error"
 // @Router /lists [post]
 func handleCreateList(c echo.Context) error {
+	parentSpan := startRequestSpan(c, "handleCreateList")
+	defer parentSpan.Finish()
+
 	var list ShoppingList
 	if err := c.Bind(&list); err != nil {
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Invalid request body"})
 	}
-	err := repository.CreateShoppingList(nil, &list)
+	err := repository.CreateShoppingList(parentSpan, &list)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to create list")
 	}
@@ -166,7 +171,10 @@ func handleCreateList(c echo.Context) error {
 // @Failure 401 {string} string "Unauthorized"
 // @Router /lists [get]
 func handleListLists(c echo.Context) error {
-	lists, err := repository.GetAllShoppingLists()
+	parentSpan := startRequestSpan(c, "handleListLists")
+	defer parentSpan.Finish()
+
+	lists, err := repository.GetAllShoppingLists(parentSpan)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
@@ -186,8 +194,11 @@ func handleListLists(c echo.Context) error {
 // @Failure 404 {string} string \"List not found\"
 // @Router /lists/{id} [delete]
 func handleDeleteList(c echo.Context) error {
+	parentSpan := startRequestSpan(c, "handleDeleteList")
+	defer parentSpan.Finish()
+
 	id := c.Param("id")
-	err := repository.DeleteShoppingList(id)
+	err := repository.DeleteShoppingList(parentSpan, id)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusNotFound, "List not found")
 	}
@@ -212,13 +223,16 @@ func handleDeleteList(c echo.Context) error {
 // @Failure 500 {string} string \"Internal Server Error\"
 // @Router /lists/{id} [put]
 func handleUpdateList(c echo.Context) error {
+	parentSpan := startRequestSpan(c, "handleUpdateList")
+	defer parentSpan.Finish()
+
 	id := c.Param("id")
 	var updatedList ShoppingList
 	if err := c.Bind(&updatedList); err != nil {
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Invalid request body"})
 	}
 
-	err := repository.UpdateShoppingList(id, &updatedList)
+	err := repository.UpdateShoppingList(parentSpan, id, &updatedList)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusNotFound, "List not found")
 	}
@@ -244,19 +258,22 @@ func handleUpdateList(c echo.Context) error {
 // @Failure 500 {string} string \"Internal Server Error\"
 // @Router /lists/{id} [patch]
 func handlePatchList(c echo.Context) error {
+	parentSpan := startRequestSpan(c, "handlePatchList")
+	defer parentSpan.Finish()
+
 	id := c.Param("id")
 	var patch ShoppingListPatch
 	if err := c.Bind(&patch); err != nil {
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Invalid request body"})
 	}
 
-	err := repository.PatchShoppingList(id, &patch)
+	err := repository.PatchShoppingList(parentSpan, id, &patch)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusNotFound, "List not found")
 	}
 	listsCache.Remove(id)
 
-	list, err := repository.GetShoppingList(id)
+	list, err := repository.GetShoppingList(parentSpan, id)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusNotFound, "List not found")
 	}
@@ -277,9 +294,12 @@ func handlePatchList(c echo.Context) error {
 // @Failure 500 {string} string \"Internal Server Error\"
 // @Router /lists/{id} [get]
 func handleGetList(c echo.Context) error {
+	parentSpan := startRequestSpan(c, "handleGetList")
+	defer parentSpan.Finish()
+
 	id := c.Param("id")
 
-	list, err := repository.GetShoppingList(id)
+	list, err := repository.GetShoppingList(parentSpan, id)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusNotFound, "List not found")
 	}
@@ -304,19 +324,22 @@ func handleGetList(c echo.Context) error {
 // @Failure 500 {string} string \"Internal Server Error\"
 // @Router /lists/{id}/push [post]
 func handleListPush(c echo.Context) error {
+	parentSpan := startRequestSpan(c, "handleListPush")
+	defer parentSpan.Finish()
+
 	id := c.Param("id")
 	var item ListPushAction
 	if err := c.Bind(&item); err != nil {
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Invalid request body"})
 	}
 
-	list, err := repository.GetShoppingList(id)
+	list, err := repository.GetShoppingList(parentSpan, id)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusNotFound, "List not found")
 	}
 
 	list.Items = append(list.Items, item.Item)
-	err = repository.UpdateShoppingList(id, list)
+	err = repository.UpdateShoppingList(parentSpan, id, list)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
@@ -337,14 +360,17 @@ func handleListPush(c echo.Context) error {
 // @Failure 500 {string} string \"Internal Server Error\"
 // @Router /login [post]
 func handleLogin(c echo.Context) error {
+	parentSpan := startRequestSpan(c, "handleLogin")
+	defer parentSpan.Finish()
+
 	var data LoginRequest
 	if err := c.Bind(&data); err != nil {
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Invalid request body"})
 	}
 
-	user, err := repository.GetUserByUsername(data.Username)
+	user, err := repository.GetUserByUsername(parentSpan, data.Username)
 	if err == nil && user.Password == data.Password {
-		if _, err := repository.AddSession(user.Username); err != nil {
+		if _, err := repository.AddSession(parentSpan, user.Username); err != nil {
 			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 		}
 
@@ -364,13 +390,16 @@ func handleLogin(c echo.Context) error {
 
 func authRequired(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
+		parentSpan := startRequestSpan(c, "authRequired")
+		defer parentSpan.Finish()
+
 		auth := c.Request().Header.Get("Authorization")
 		if !strings.HasPrefix(auth, "Bearer ") {
 			return echo.NewHTTPError(http.StatusUnauthorized, "Missing or invalid token")
 		}
 
 		token := auth[7:]
-		session, err := repository.GetSession(token)
+		session, err := repository.GetSession(parentSpan, token)
 		if err != nil {
 			return echo.NewHTTPError(http.StatusUnauthorized, "Invalid token")
 		}
@@ -405,4 +434,11 @@ func addCacheHeaders() echo.MiddlewareFunc {
 			return next(c)
 		}
 	}
+}
+
+func startRequestSpan(c echo.Context, name string) opentracing.Span {
+	span := opentracing.GlobalTracer().StartSpan(name)
+	ext.HTTPMethod.Set(span, c.Request().Method)
+	ext.HTTPUrl.Set(span, c.Request().URL.Path)
+	return span
 }
