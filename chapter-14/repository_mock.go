@@ -41,18 +41,18 @@ func (m *MockRepositoryInterface) EXPECT() *MockRepositoryInterfaceMockRecorder 
 }
 
 // AddSession mocks base method.
-func (m *MockRepositoryInterface) AddSession(username string) (*Session, error) {
+func (m *MockRepositoryInterface) AddSession(parentSpan opentracing.Span, username string) (*Session, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "AddSession", username)
+	ret := m.ctrl.Call(m, "AddSession", parentSpan, username)
 	ret0, _ := ret[0].(*Session)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // AddSession indicates an expected call of AddSession.
-func (mr *MockRepositoryInterfaceMockRecorder) AddSession(username any) *gomock.Call {
+func (mr *MockRepositoryInterfaceMockRecorder) AddSession(parentSpan, username any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddSession", reflect.TypeOf((*MockRepositoryInterface)(nil).AddSession), username)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddSession", reflect.TypeOf((*MockRepositoryInterface)(nil).AddSession), parentSpan, username)
 }
 
 // CreateShoppingList mocks base method.
@@ -70,92 +70,92 @@ func (mr *MockRepositoryInterfaceMockRecorder) CreateShoppingList(parentSpan, li
 }
 
 // DeleteShoppingList mocks base method.
-func (m *MockRepositoryInterface) DeleteShoppingList(id string) error {
+func (m *MockRepositoryInterface) DeleteShoppingList(parentSpan opentracing.Span, id string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "DeleteShoppingList", id)
+	ret := m.ctrl.Call(m, "DeleteShoppingList", parentSpan, id)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // DeleteShoppingList indicates an expected call of DeleteShoppingList.
-func (mr *MockRepositoryInterfaceMockRecorder) DeleteShoppingList(id any) *gomock.Call {
+func (mr *MockRepositoryInterfaceMockRecorder) DeleteShoppingList(parentSpan, id any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteShoppingList", reflect.TypeOf((*MockRepositoryInterface)(nil).DeleteShoppingList), id)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteShoppingList", reflect.TypeOf((*MockRepositoryInterface)(nil).DeleteShoppingList), parentSpan, id)
 }
 
 // GetAllShoppingLists mocks base method.
-func (m *MockRepositoryInterface) GetAllShoppingLists() ([]ShoppingList, error) {
+func (m *MockRepositoryInterface) GetAllShoppingLists(parentSpan opentracing.Span) ([]ShoppingList, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetAllShoppingLists")
+	ret := m.ctrl.Call(m, "GetAllShoppingLists", parentSpan)
 	ret0, _ := ret[0].([]ShoppingList)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetAllShoppingLists indicates an expected call of GetAllShoppingLists.
-func (mr *MockRepositoryInterfaceMockRecorder) GetAllShoppingLists() *gomock.Call {
+func (mr *MockRepositoryInterfaceMockRecorder) GetAllShoppingLists(parentSpan any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAllShoppingLists", reflect.TypeOf((*MockRepositoryInterface)(nil).GetAllShoppingLists))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAllShoppingLists", reflect.TypeOf((*MockRepositoryInterface)(nil).GetAllShoppingLists), parentSpan)
 }
 
 // GetSession mocks base method.
-func (m *MockRepositoryInterface) GetSession(token string) (*Session, error) {
+func (m *MockRepositoryInterface) GetSession(parentSpan opentracing.Span, token string) (*Session, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetSession", token)
+	ret := m.ctrl.Call(m, "GetSession", parentSpan, token)
 	ret0, _ := ret[0].(*Session)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetSession indicates an expected call of GetSession.
-func (mr *MockRepositoryInterfaceMockRecorder) GetSession(token any) *gomock.Call {
+func (mr *MockRepositoryInterfaceMockRecorder) GetSession(parentSpan, token any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSession", reflect.TypeOf((*MockRepositoryInterface)(nil).GetSession), token)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSession", reflect.TypeOf((*MockRepositoryInterface)(nil).GetSession), parentSpan, token)
 }
 
 // GetShoppingList mocks base method.
-func (m *MockRepositoryInterface) GetShoppingList(id string) (*ShoppingList, error) {
+func (m *MockRepositoryInterface) GetShoppingList(parentSpan opentracing.Span, id string) (*ShoppingList, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetShoppingList", id)
+	ret := m.ctrl.Call(m, "GetShoppingList", parentSpan, id)
 	ret0, _ := ret[0].(*ShoppingList)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetShoppingList indicates an expected call of GetShoppingList.
-func (mr *MockRepositoryInterfaceMockRecorder) GetShoppingList(id any) *gomock.Call {
+func (mr *MockRepositoryInterfaceMockRecorder) GetShoppingList(parentSpan, id any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetShoppingList", reflect.TypeOf((*MockRepositoryInterface)(nil).GetShoppingList), id)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetShoppingList", reflect.TypeOf((*MockRepositoryInterface)(nil).GetShoppingList), parentSpan, id)
 }
 
 // GetUser mocks base method.
-func (m *MockRepositoryInterface) GetUser(userID uint) (*User, error) {
+func (m *MockRepositoryInterface) GetUser(parentSpan opentracing.Span, userID uint) (*User, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetUser", userID)
+	ret := m.ctrl.Call(m, "GetUser", parentSpan, userID)
 	ret0, _ := ret[0].(*User)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetUser indicates an expected call of GetUser.
-func (mr *MockRepositoryInterfaceMockRecorder) GetUser(userID any) *gomock.Call {
+func (mr *MockRepositoryInterfaceMockRecorder) GetUser(parentSpan, userID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUser", reflect.TypeOf((*MockRepositoryInterface)(nil).GetUser), userID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUser", reflect.TypeOf((*MockRepositoryInterface)(nil).GetUser), parentSpan, userID)
 }
 
 // GetUserByUsername mocks base method.
-func (m *MockRepositoryInterface) GetUserByUsername(username string) (*User, error) {
+func (m *MockRepositoryInterface) GetUserByUsername(parentSpan opentracing.Span, username string) (*User, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetUserByUsername", username)
+	ret := m.ctrl.Call(m, "GetUserByUsername", parentSpan, username)
 	ret0, _ := ret[0].(*User)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetUserByUsername indicates an expected call of GetUserByUsername.
-func (mr *MockRepositoryInterfaceMockRecorder) GetUserByUsername(username any) *gomock.Call {
+func (mr *MockRepositoryInterfaceMockRecorder) GetUserByUsername(parentSpan, username any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserByUsername", reflect.TypeOf((*MockRepositoryInterface)(nil).GetUserByUsername), username)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserByUsername", reflect.TypeOf((*MockRepositoryInterface)(nil).GetUserByUsername), parentSpan, username)
 }
 
 // Init mocks base method.
@@ -173,29 +173,29 @@ func (mr *MockRepositoryInterfaceMockRecorder) Init() *gomock.Call {
 }
 
 // PatchShoppingList mocks base method.
-func (m *MockRepositoryInterface) PatchShoppingList(id string, patch *ShoppingListPatch) error {
+func (m *MockRepositoryInterface) PatchShoppingList(parentSpan opentracing.Span, id string, patch *ShoppingListPatch) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "PatchShoppingList", id, patch)
+	ret := m.ctrl.Call(m, "PatchShoppingList", parentSpan, id, patch)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // PatchShoppingList indicates an expected call of PatchShoppingList.
-func (mr *MockRepositoryInterfaceMockRecorder) PatchShoppingList(id, patch any) *gomock.Call {
+func (mr *MockRepositoryInterfaceMockRecorder) PatchShoppingList(parentSpan, id, patch any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PatchShoppingList", reflect.TypeOf((*MockRepositoryInterface)(nil).PatchShoppingList), id, patch)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PatchShoppingList", reflect.TypeOf((*MockRepositoryInterface)(nil).PatchShoppingList), parentSpan, id, patch)
 }
 
 // UpdateShoppingList mocks base method.
-func (m *MockRepositoryInterface) UpdateShoppingList(id string, list *ShoppingList) error {
+func (m *MockRepositoryInterface) UpdateShoppingList(parentSpan opentracing.Span, id string, list *ShoppingList) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpdateShoppingList", id, list)
+	ret := m.ctrl.Call(m, "UpdateShoppingList", parentSpan, id, list)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // UpdateShoppingList indicates an expected call of UpdateShoppingList.
-func (mr *MockRepositoryInterfaceMockRecorder) UpdateShoppingList(id, list any) *gomock.Call {
+func (mr *MockRepositoryInterfaceMockRecorder) UpdateShoppingList(parentSpan, id, list any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateShoppingList", reflect.TypeOf((*MockRepositoryInterface)(nil).UpdateShoppingList), id, list)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateShoppingList", reflect.TypeOf((*MockRepositoryInterface)(nil).UpdateShoppingList), parentSpan, id, list)
 }

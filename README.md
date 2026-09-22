@@ -62,6 +62,13 @@ curl -X POST "$API_URL/lists" \
   --data '{"id": 1, "name": "my first shopping list", "items": ["eggs", "milk"]}'
 ```
 
+With API prefix:
+```
+curl -X POST "$API_URL/api/lists" \
+  -H "Authorization: Bearer $TOKEN" \
+  --data '{"id": 1, "name": "my first shopping list", "items": ["eggs", "milk"]}'
+```
+
 ## List all lists
 ```
 curl "$API_URL/lists" -H "Authorization: Bearer $TOKEN" | jq

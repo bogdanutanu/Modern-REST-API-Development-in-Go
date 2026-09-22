@@ -13,16 +13,16 @@ import (
 
 type RepositoryInterface interface {
 	Init() error
-	AddSession(username string) (*Session, error)
-	GetSession(token string) (*Session, error)
-	GetUserByUsername(username string) (*User, error)
-	GetUser(userID uint) (*User, error)
+	AddSession(parentSpan opentracing.Span, username string) (*Session, error)
+	GetSession(parentSpan opentracing.Span, token string) (*Session, error)
+	GetUserByUsername(parentSpan opentracing.Span, username string) (*User, error)
+	GetUser(parentSpan opentracing.Span, userID uint) (*User, error)
 	CreateShoppingList(parentSpan opentracing.Span, list *ShoppingList) error
-	GetAllShoppingLists() ([]ShoppingList, error)
-	GetShoppingList(id string) (*ShoppingList, error)
-	UpdateShoppingList(id string, list *ShoppingList) error
-	DeleteShoppingList(id string) error
-	PatchShoppingList(id string, patch *ShoppingListPatch) error
+	GetAllShoppingLists(parentSpan opentracing.Span) ([]ShoppingList, error)
+	GetShoppingList(parentSpan opentracing.Span, id string) (*ShoppingList, error)
+	UpdateShoppingList(parentSpan opentracing.Span, id string, list *ShoppingList) error
+	DeleteShoppingList(parentSpan opentracing.Span, id string) error
+	PatchShoppingList(parentSpan opentracing.Span, id string, patch *ShoppingListPatch) error
 }
 
 type Repository struct {
@@ -53,7 +53,10 @@ func (r *Repository) Init() error {
 	return result.Error
 }
 
-func (r *Repository) GetUser(userID uint) (*User, error) {
+func (r *Repository) GetUser(parentSpan opentracing.Span, userID uint) (*User, error) {
+	span := childSpan(parentSpan, "GetUser")
+	defer span.Finish()
+
 	var user User
 	result := r.db.Where("id = ?", userID).First(&user)
 	if result.Error != nil {
@@ -62,7 +65,10 @@ func (r *Repository) GetUser(userID uint) (*User, error) {
 	return &user, nil
 }
 
-func (r *Repository) GetUserByUsername(username string) (*User, error) {
+func (r *Repository) GetUserByUsername(parentSpan opentracing.Span, username string) (*User, error) {
+	span := childSpan(parentSpan, "GetUserByUsername")
+	defer span.Finish()
+
 	var user User
 	result := r.db.Where("username = ?", username).First(&user)
 	if result.Error != nil {
@@ -71,11 +77,13 @@ func (r *Repository) GetUserByUsername(username string) (*User, error) {
 	return &user, nil
 }
 
-func (r *Repository) AddSession(username string) (*Session, error) {
-	var user User
-	result := r.db.Where("username = ?", username).First(&user)
-	if result.Error != nil {
-		return nil, result.Error
+func (r *Repository) AddSession(parentSpan opentracing.Span, username string) (*Session, error) {
+	span := childSpan(parentSpan, "AddSession")
+	defer span.Finish()
+
+	user, err := r.GetUserByUsername(span, username)
+	if err != nil {
+		return nil, err
 	}
 	token := strconv.Itoa(rand.Intn(100000000000))
 	session := Session{Token: token, Expires: time.Now().Add(7 * 24 * time.Hour), UserID: user.ID}
@@ -86,7 +94,10 @@ func (r *Repository) AddSession(username string) (*Session, error) {
 	return &session, nil
 }
 
-func (r *Repository) GetSession(token string) (*Session, error) {
+func (r *Repository) GetSession(parentSpan opentracing.Span, token string) (*Session, error) {
+	span := childSpan(parentSpan, "GetSession")
+	defer span.Finish()
+
 	var session Session
 	result := r.db.Where("token = ? AND expires > ?", token, time.Now()).First(&session)
 	if result.Error != nil {
@@ -96,15 +107,17 @@ func (r *Repository) GetSession(token string) (*Session, error) {
 }
 
 func (r *Repository) CreateShoppingList(parentSpan opentracing.Span, list *ShoppingList) error {
-	span := opentracing.StartSpan("AddShopingList",
-		opentracing.ChildOf(parentSpan.Context()))
+	span := childSpan(parentSpan, "AddShopingList")
 	defer span.Finish()
 	span.LogKV("my-custom-data", "relevant data in the trace")
 	result := r.db.Create(list)
 	return result.Error
 }
 
-func (r *Repository) GetAllShoppingLists() ([]ShoppingList, error) {
+func (r *Repository) GetAllShoppingLists(parentSpan opentracing.Span) ([]ShoppingList, error) {
+	span := childSpan(parentSpan, "GetAllShoppingLists")
+	defer span.Finish()
+
 	var results []ShoppingList
 	result := r.db.Find(&results)
 	if result.Error != nil {
@@ -113,7 +126,10 @@ func (r *Repository) GetAllShoppingLists() ([]ShoppingList, error) {
 	return results, nil
 }
 
-func (r *Repository) GetShoppingList(id string) (*ShoppingList, error) {
+func (r *Repository) GetShoppingList(parentSpan opentracing.Span, id string) (*ShoppingList, error) {
+	span := childSpan(parentSpan, "GetShoppingList")
+	defer span.Finish()
+
 	var list ShoppingList
 	result := r.db.Where("id = ?", id).First(&list)
 	if result.Error != nil {
@@ -122,12 +138,18 @@ func (r *Repository) GetShoppingList(id string) (*ShoppingList, error) {
 	return &list, nil
 }
 
-func (r *Repository) UpdateShoppingList(id string, list *ShoppingList) error {
+func (r *Repository) UpdateShoppingList(parentSpan opentracing.Span, id string, list *ShoppingList) error {
+	span := childSpan(parentSpan, "UpdateShoppingList")
+	defer span.Finish()
+
 	result := r.db.Model(&ShoppingList{}).Where("id = ?", id).Updates(list)
 	return result.Error
 }
 
-func (r *Repository) DeleteShoppingList(id string) error {
+func (r *Repository) DeleteShoppingList(parentSpan opentracing.Span, id string) error {
+	span := childSpan(parentSpan, "DeleteShoppingList")
+	defer span.Finish()
+
 	result := r.db.Where("id = ?", id).Delete(&ShoppingList{})
 	if result.Error != nil {
 		return result.Error
@@ -135,10 +157,17 @@ func (r *Repository) DeleteShoppingList(id string) error {
 	return nil
 }
 
-func (r *Repository) PatchShoppingList(id string, patch *ShoppingListPatch) error {
+func (r *Repository) PatchShoppingList(parentSpan opentracing.Span, id string, patch *ShoppingListPatch) error {
+	span := childSpan(parentSpan, "PatchShoppingList")
+	defer span.Finish()
+
 	result := r.db.Model(&ShoppingList{}).Where("id = ?", id).Updates(patch)
 	if result.Error != nil {
 		return result.Error
 	}
 	return nil
+}
+
+func childSpan(parentSpan opentracing.Span, name string) opentracing.Span {
+	return opentracing.StartSpan(name, opentracing.ChildOf(parentSpan.Context()))
 }
