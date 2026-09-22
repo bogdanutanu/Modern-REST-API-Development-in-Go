@@ -69,14 +69,14 @@ func main() {
 
 	mux := http.NewServeMux()
 
-	mux.HandleFunc("GET /lists", authRequired(handleListLists))
-	mux.HandleFunc("POST /lists", adminRequired(handleCreateList))
-	mux.HandleFunc("GET /lists/{id}", authRequired(handleGetList))
-	mux.HandleFunc("PUT /lists/{id}", adminRequired(handleUpdateList))
-	mux.HandleFunc("DELETE /lists/{id}", adminRequired(handleDeleteList))
-	mux.HandleFunc("PATCH /lists/{id}", adminRequired(handlePatchList))
-	mux.HandleFunc("POST /lists/{id}/push", adminRequired(handleListPush))
-	mux.HandleFunc("POST /login", handleLogin)
+	mux.HandleFunc("GET /api/lists", authRequired(handleListLists))
+	mux.HandleFunc("POST /api/lists", adminRequired(handleCreateList))
+	mux.HandleFunc("GET /api/lists/{id}", authRequired(handleGetList))
+	mux.HandleFunc("PUT /api/lists/{id}", adminRequired(handleUpdateList))
+	mux.HandleFunc("DELETE /api/lists/{id}", adminRequired(handleDeleteList))
+	mux.HandleFunc("PATCH /api/lists/{id}", adminRequired(handlePatchList))
+	mux.HandleFunc("POST /api/lists/{id}/push", adminRequired(handleListPush))
+	mux.HandleFunc("POST /api/login", handleLogin)
 
 	corsMiddleware := cors.New(cors.Options{
 		AllowedOrigins: []string{

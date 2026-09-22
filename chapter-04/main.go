@@ -25,13 +25,13 @@ type ListPushAction struct {
 var allData []ShoppingList = []ShoppingList{}
 
 func main() {
-	http.HandleFunc("POST /v1/lists", handleCreateList)
-	http.HandleFunc("GET /v1/lists", handleListLists)
-	http.HandleFunc("DELETE /v1/lists/{id}", handleDeleteList)
-	http.HandleFunc("PUT /v1/lists/{id}", handleUpdateList)
-	http.HandleFunc("PATCH /v1/lists/{id}", handlePatchList)
-	http.HandleFunc("GET /v1/lists/{id}", handleGetList)
-	http.HandleFunc("POST /v1/lists/{id}/push", handleListPush)
+	http.HandleFunc("POST /api/v1/lists", handleCreateList)
+	http.HandleFunc("GET /api/v1/lists", handleListLists)
+	http.HandleFunc("DELETE /api/v1/lists/{id}", handleDeleteList)
+	http.HandleFunc("PUT /api/v1/lists/{id}", handleUpdateList)
+	http.HandleFunc("PATCH /api/v1/lists/{id}", handlePatchList)
+	http.HandleFunc("GET /api/v1/lists/{id}", handleGetList)
+	http.HandleFunc("POST /api/v1/lists/{id}/push", handleListPush)
 
 	fmt.Println("listening on port :8888")
 	http.ListenAndServe(":8888", nil)

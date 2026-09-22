@@ -103,14 +103,14 @@ func main() {
 	}
 	defer closer.Close()
 
-	http.HandleFunc("GET /lists", addCacheHeaders(MetricsMiddleware(authRequired(handleListLists))))
-	http.HandleFunc("POST /lists", MetricsMiddleware(adminRequired(handleCreateList)))
-	http.HandleFunc("GET /lists/{id}", MetricsMiddleware(authRequired(handleGetList)))
-	http.HandleFunc("PUT /lists/{id}", MetricsMiddleware(adminRequired(handleUpdateList)))
-	http.HandleFunc("DELETE /lists/{id}", MetricsMiddleware(adminRequired(handleDeleteList)))
-	http.HandleFunc("PATCH /lists/{id}", MetricsMiddleware(adminRequired(handlePatchList)))
-	http.HandleFunc("POST /lists/{id}/push", MetricsMiddleware(adminRequired(handleListPush)))
-	http.HandleFunc("POST /login", MetricsMiddleware(handleLogin))
+	http.HandleFunc("GET /api/lists", addCacheHeaders(MetricsMiddleware(authRequired(handleListLists))))
+	http.HandleFunc("POST /api/lists", MetricsMiddleware(adminRequired(handleCreateList)))
+	http.HandleFunc("GET /api/lists/{id}", MetricsMiddleware(authRequired(handleGetList)))
+	http.HandleFunc("PUT /api/lists/{id}", MetricsMiddleware(adminRequired(handleUpdateList)))
+	http.HandleFunc("DELETE /api/lists/{id}", MetricsMiddleware(adminRequired(handleDeleteList)))
+	http.HandleFunc("PATCH /api/lists/{id}", MetricsMiddleware(adminRequired(handlePatchList)))
+	http.HandleFunc("POST /api/lists/{id}/push", MetricsMiddleware(adminRequired(handleListPush)))
+	http.HandleFunc("POST /api/login", MetricsMiddleware(handleLogin))
 
 	http.Handle("/metrics", promhttp.Handler())
 
